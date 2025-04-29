@@ -39,21 +39,24 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument("--generate-template", nargs="?",
                     choices=get_template_names(),
-                    help="Develoment dockerfile to use. Defaults to ~/config/devcontainer/Dockerfile")
-
+                    help="Generate a template")
 
 parser.add_argument("--dev-dockerfile", nargs="?",
-                    help="Develoment dockerfile to use. Defaults to ~/config/devcontainer/Dockerfile")
+                    default="~/.config/devcontainer/Dockerfile",
+                    help="Develoment dockerfile to use")
 
 parser.add_argument("--sdk-image", nargs="?",
                     default="",
                     help="Docker image to use as a base.")
+
 parser.add_argument("--image", nargs="?", help="Docker image to use.")
+
 parser.add_argument("--build", action="store_true",
                     help="Build the Docker image.")
+
 parser.add_argument("--shell", nargs="?",
                     help="Shell to use in the container.")
-args = parser.parse_args()
+
 
 UID = os.getuid()
 GID = os.getgid()
@@ -186,6 +189,7 @@ def open_shell(name: str) -> None:
 
 
 if __name__ == "__main__":
+    args = parser.parse_args()
 
     if args.generate_template:
         generate_template(args.generate_template)
@@ -195,7 +199,10 @@ if __name__ == "__main__":
         print("No image specified.")
         sys.exit(1)
 
-    dockerfile_path = args.dev_dockerfile if args.dev_dockerfile else get_default_config_file_path()
+    dockerfile_path = args.dev_dockerfile
+
+    if args.dev_dockerfile is None:
+        dockerfile_path = get_default_config_file_path()
 
     if dockerfile_path is None:
         print("No dockerfile specified.")
