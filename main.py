@@ -39,6 +39,10 @@ def generate_template(template_name: str) -> None:
 parser = argparse.ArgumentParser(
     description="Execute a command in a Docker container.")
 
+
+parser.add_argument("--install", action="store_true",
+                    help="Install the package")
+
 parser.add_argument("--generate-template", nargs="?",
                     choices=get_template_names(),
                     help="Generate a template")
@@ -58,6 +62,54 @@ parser.add_argument("--build", action="store_true",
 
 parser.add_argument("--shell", nargs="?",
                     help="Shell to use in the container.")
+
+
+def install():
+
+    local_bin = Path.home() / ".local" / "bin"
+    install_location = local_bin / "devcontainer"
+    bin_link = local_bin / "devcon"
+
+    # remove dir
+    if os.path.exists(install_location):
+        print(f"Removing {install_location}...")
+        subprocess.run(["rm", "-rf", install_location])
+
+    # check if the symlink exists
+    if os.path.lexists(bin_link):
+        print(f"Removing {bin_link}...")
+        os.remove(bin_link)
+
+    os.makedirs(install_location)
+    os.chmod(install_location, 0o755)
+
+    source_location = Path(__file__).resolve().parent
+
+    if source_location == install_location:
+        print("Source location is the same as install location.")
+        sys.exit(1)
+
+    # copy the folder to the install location
+    subprocess.run(
+        [
+            "rsync",
+            "-a",
+            f"{source_location}/",
+            f"{install_location}/",
+        ],
+
+        cwd=os.path.dirname(source_location),
+    )
+
+    # create a symlink to the script
+    subprocess.run(
+        [
+            "ln",
+            "-s",
+            f"{install_location}/main.py",
+            f"{bin_link}",
+        ]
+    )
 
 
 UID = os.getuid()
@@ -192,6 +244,10 @@ def open_shell(name: str) -> None:
 
 if __name__ == "__main__":
     args = parser.parse_args()
+
+    if args.install:
+        install()
+        sys.exit(0)
 
     if args.generate_template:
         generate_template(args.generate_template)
