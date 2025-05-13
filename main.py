@@ -4,11 +4,12 @@ import sys
 import subprocess
 import os
 import argparse
+from pathlib import Path
 
 
 def get_template_names() -> list[str]:
-    source_code_path = os.path.dirname(__file__)
-    templates_dir = os.path.join(source_code_path, "templates")
+    source_code_path = Path(__file__).resolve().parent
+    templates_dir = source_code_path / "templates"
 
     templates = os.listdir(templates_dir)
 
@@ -16,17 +17,16 @@ def get_template_names() -> list[str]:
 
 
 def get_template_path(template_name: str) -> str:
-    source_code_path = os.path.dirname(__file__)
-    templates_dir = os.path.join(source_code_path, "templates")
-    template_path = os.path.join(templates_dir, f"Dockerfile.{template_name}")
+    source_code_path = Path(__file__).resolve().parent
+    templates_dir = source_code_path / "templates"
 
-    return template_path
+    return templates_dir / f"Dockerfile.{template_name}"
 
 
 def generate_template(template_name: str) -> None:
     template_path = get_template_path(template_name)
 
-    if not os.path.exists(template_path):
+    if not template_path.exists():
         print(f"Template {template_name} does not exist.")
         sys.exit(1)
 
@@ -75,8 +75,8 @@ CONFIG_DIR = os.environ.get("XDG_CONFIG_HOME")
 CONFIG_DEV_DOCKERFILE = "devcontainer/Dockerfile"
 
 
-def get_default_config_file_path() -> str | None:
-    return os.path.join(CONFIG_DIR, CONFIG_DEV_DOCKERFILE)
+def get_default_config_file_path() -> Path | None:
+    return Path(CONFIG_DIR) / CONFIG_DEV_DOCKERFILE
 
 
 def docker_exec(name: str, user: str, command: str) -> None:
@@ -201,7 +201,7 @@ if __name__ == "__main__":
         print("No image specified.")
         sys.exit(1)
 
-    dockerfile_path = args.dev_dockerfile
+    dockerfile_path = Path(args.dev_dockerfile)
 
     if args.dev_dockerfile is None:
         dockerfile_path = get_default_config_file_path()
@@ -209,6 +209,8 @@ if __name__ == "__main__":
     if dockerfile_path is None:
         print("No dockerfile specified.")
         sys.exit(1)
+
+    dockerfile_path = dockerfile_path.expanduser().resolve().absolute()
 
     image: str = args.image
 
