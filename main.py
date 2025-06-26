@@ -81,7 +81,6 @@ def install():
         os.remove(bin_link)
 
     os.makedirs(install_location)
-    os.chmod(install_location, 0o755)
 
     source_location = Path(__file__).resolve().parent
 
@@ -110,6 +109,9 @@ def install():
             f"{bin_link}",
         ]
     )
+
+    os.chmod(install_location, 0o755)
+    os.chmod(bin_link, 0o755, follow_symlinks=True)
 
 
 UID = os.getuid()
